@@ -12,17 +12,17 @@ public class Inspector {
 
     private void inspectClass(Class c, Object obj, boolean recursive, int depth) {
         while (!c.equals(Object.class)) { // Get info on super classes until the base class object it reached
-            outputAllDetails(c);
+            outputAllDetails(c, recursive);
             c = c.getSuperclass();
         }
     }
 
 
-    private void outputAllDetails(Class c) { // Gets all details on the current class other than the name (as those are already displayed)
+    private void outputAllDetails(Class c, boolean recursive) { // Gets all details on the current class other than the name (as those are already displayed)
         printBreak();
         getClassName(c);
-        getConstructors(c);
-        getMethods(c);
+        getConstructors(c, recursive);
+        getMethods(c, recursive);
         getInterfaces(c);
     }
 
@@ -38,12 +38,11 @@ public class Inspector {
 
         for (Class ci : interfaces) {
             getClassName(ci);
-            getMethods(ci);
         }
     }
 
 
-    private void getConstructors(Class c) {
+    private void getConstructors(Class c, boolean recursive) {
         try {
             int modifier;
             String constructorName;
@@ -58,12 +57,13 @@ public class Inspector {
                 constructorMods = Modifier.toString(modifier);
 
                 System.out.println("\nConstructor name: " + constructorName);
+                System.out.println("Constructor Modifiers: " + constructorMods);
 
                 constructorParams = ci.getParameters();
-                String paramType;
-                for (Parameter pi : constructorParams) { // Iterate through params
-                    paramType = pi.getType().toString();
-                    System.out.println("Parameter name: " + paramType);
+
+                if (constructorParams.length != 0) {
+                    System.out.println("Constructor parameter types: ");
+                    displayParameters(constructorParams, recursive);
                 }
             }
         } catch (Exception e) {
@@ -74,12 +74,13 @@ public class Inspector {
     }
 
 
-    private void getMethods(Class c) {
+    private void getMethods(Class c, boolean recursive) {
         int modifier;
         String methodName;
         String methodReturnType;
         String methodMods;
         Class<?>[] methodExceptions;
+        Parameter[] methodParams;
 
         Method[] classMethods = c.getDeclaredMethods();
 
@@ -89,6 +90,7 @@ public class Inspector {
             modifier = mi.getModifiers();
             methodMods = Modifier.toString(modifier);
             methodExceptions = mi.getExceptionTypes();
+            methodParams = mi.getParameters();
 
             System.out.println("Method name: " + methodName);
             System.out.println("Method return type: " + methodReturnType);
@@ -100,8 +102,22 @@ public class Inspector {
                     System.out.print(ci.toString() + "\n");
                 }
             }
+            if (methodParams.length != 0) {
+                System.out.println("Method parameter types: ");
+                displayParameters(methodParams, recursive);
+            }
+            System.out.println();
         }
-        System.out.println("\n");
+        System.out.println();
+    }
+
+
+    private void displayParameters(Parameter[] params, boolean recursive) {
+        String paramType;
+        for (Parameter pi : params) {
+            paramType = pi.getType().toString();
+            System.out.println(paramType);
+        }
     }
 
 
