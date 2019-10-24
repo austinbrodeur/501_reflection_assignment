@@ -1,57 +1,63 @@
 import java.lang.reflect.*;
-import java.util.Hashtable;
 
 
 public class Inspector {
-    int depth = 0;
+    private int depth = 0;
+    private boolean rec = false;
 
     public void inspect(Object obj, boolean recursive) {
+        rec = recursive;
         Class c = obj.getClass();
-        inspectClass(c, obj, recursive);
+        inspectClass(c, obj);
     }
 
 
-    private void inspectClass(Class c, Object obj, boolean recursive) {
+    public void inspectClass(Class c, Object obj) {
         while (c != null) { // Get info on super classes until the base class object it reached
-            outputAllDetails(c, obj, recursive);
+            outputAllDetails(c, obj);
             c = c.getSuperclass();
-            depth = depth + 1;
+            depth++;
         }
     }
 
 
-    private void outputAllDetails(Class c, Object obj, boolean recursive) { // Gets all details on the current class other than the name (as those are already displayed)
-        printBreak();
+    public void outputAllDetails(Class c, Object obj) { // Gets all details on the current class other than the name (as those are already displayed)
+        getInterfaces(c);
         getClassName(c);
-        getConstructors(c, recursive);
-        getMethods(c, recursive);
-        //getInterfaces(c);
-        getFields(c, obj, recursive);
+        getConstructors(c);
+        getMethods(c);
+        getFields(c, obj);
+    }
+
+    public void outputAllDetailsInterface(Class c) {
+        getInterfaces(c);
+        getClassName(c);
+        getConstructors(c);
+        getMethods(c);
     }
 
 
-    private void getClassName(Class c) {
+    public void getClassName(Class c) {
         String className = c.getName();
         if (c.isInterface()) {
-            printWithTabs(depth, "Class name: " + className);
+            printWithTabs("Interface name: " + className);
         }
         else {
-            printWithTabs(depth, "Interface name: " + className);
+            printWithTabs("Class name: " + className);
         }
     }
 
 
-    private void getInterfaces(Class c, int depth) {
+    public void getInterfaces(Class c) {
         Class[] interfaces = c.getInterfaces();
-
         for (Class ci : interfaces) {
-            getClassName(c);
+            outputAllDetailsInterface(ci);
+            depth++;
         }
     }
 
 
-    private void getConstructors(Class c, boolean recursive) {
-        try {
+    public void getConstructors(Class c) {
             int modifier;
             String constructorName;
             Parameter[] constructorParams;
@@ -59,31 +65,34 @@ public class Inspector {
 
             Constructor[] constructors = c.getConstructors();
 
-            for (Constructor ci : constructors) { // Iterate through constructors
-                constructorName = ci.getName();
-                modifier = ci.getModifiers();
-                constructorMods = Modifier.toString(modifier);
+            if (constructors.length != 0) {
+                try {
+                    for (Constructor ci : constructors) { // Iterate through constructors
+                        constructorName = ci.getName();
+                        modifier = ci.getModifiers();
+                        constructorMods = Modifier.toString(modifier);
 
+                        printWithTabs("Constructor name: " + constructorName);
+                        printWithTabs("Constructor Modifiers: " + constructorMods);
 
-                printWithTabs(depth, "Constructor name: " + constructorName);
-                printWithTabs(depth, "Constructor Modifiers: " + constructorMods);
+                        constructorParams = ci.getParameters();
 
-                constructorParams = ci.getParameters();
+                        if (constructorParams.length != 0) {
+                            printWithTabs("Constructor parameter types: ");
+                            displayParameters(constructorParams);
+                        }
+                    }
 
-                if (constructorParams.length != 0) {
-                    printWithTabs(depth, "Constructor parameter types: ");
-                    displayParameters(constructorParams, recursive);
+                } catch(Exception e){
+                    printWithTabs("Exception getting constructor: ");
+                    e.printStackTrace();
                 }
             }
-        } catch (Exception e) {
-            printWithTabs(depth,"Exception getting constructor: ");
-            e.printStackTrace();
-        }
-        System.out.println();
+            System.out.println();
     }
 
 
-    private void getMethods(Class c, boolean recursive) {
+    public void getMethods(Class c) {
         int modifier;
         String methodName;
         String methodReturnType;
@@ -93,36 +102,38 @@ public class Inspector {
 
         Method[] classMethods = c.getDeclaredMethods();
 
-        for (Method mi : classMethods) {
-            mi.setAccessible(true);
-            methodName = mi.getName();
-            methodReturnType = mi.getReturnType().toString();
-            methodExceptions = mi.getExceptionTypes();
-            methodParams = mi.getParameters();
+        if (classMethods.length != 0) {
+            for (Method mi : classMethods) {
+                mi.setAccessible(true);
+                methodName = mi.getName();
+                methodReturnType = mi.getReturnType().toString();
+                methodExceptions = mi.getExceptionTypes();
+                methodParams = mi.getParameters();
 
-            modifier = mi.getModifiers();
-            methodMods = Modifier.toString(modifier);
+                modifier = mi.getModifiers();
+                methodMods = Modifier.toString(modifier);
 
-            printWithTabs(depth, "Method name: " + methodName);
-            printWithTabs(depth, "Method return type: " + methodReturnType);
-            printWithTabs(depth, "Method modifiers: " + methodMods);
+                printWithTabs("Method name: " + methodName);
+                printWithTabs("Method return type: " + methodReturnType);
+                printWithTabs("Method modifiers: " + methodMods);
 
-            if (methodExceptions.length != 0) {
-                printWithTabs(depth, "Method exception(s): ");
-                for (Class ci : methodExceptions) {
-                    printWithTabs(depth, ci.toString());
+                if (methodExceptions.length != 0) {
+                    printWithTabs("Method exception(s): ");
+                    for (Class ci : methodExceptions) {
+                        printWithTabs(ci.toString());
+                    }
                 }
-            }
-            if (methodParams.length != 0) {
-                printWithTabs(depth, "Method parameter types: ");
-                displayParameters(methodParams, recursive);
+                if (methodParams.length != 0) {
+                    printWithTabs("Method parameter types: ");
+                    displayParameters(methodParams);
+                }
+                System.out.println();
             }
             System.out.println();
         }
-        System.out.println();
     }
 
-    private void getFields(Class c, Object obj, boolean recursive) {
+    public void getFields(Class c, Object obj) {
         Field[] fields = c.getDeclaredFields();
         Field singleField;
         String fieldName;
@@ -131,45 +142,64 @@ public class Inspector {
         Object value;
         int modifier;
 
-        try {
-            for (Field fi : fields) {
-                modifier = fi.getModifiers();
-                fieldMods = Modifier.toString(modifier);
-                fieldName = fi.getName();
-                singleField = c.getDeclaredField(fi.getName());
-                singleField.setAccessible(true);
-                fieldType = fi.getType().toString();
-                value = singleField.get(obj);
+        if (fields.length != 0) {
+            try {
+                for (Field fi : fields) {
+                    modifier = fi.getModifiers();
+                    fieldMods = Modifier.toString(modifier);
+                    fieldName = fi.getName();
+                    singleField = c.getDeclaredField(fi.getName()); // Made to get access to private fields
+                    singleField.setAccessible(true);
+                    fieldType = fi.getType().toString();
+                    value = singleField.get(obj);
 
-                printWithTabs(depth, "Field name: " + fieldName);
-                printWithTabs(depth, "Field type: " + fieldType);
-                printWithTabs(depth, "Field modifiers: " + fieldMods);
-                try {
-                    printWithTabs(depth, "Field contents: " + value.toString());
+                    printWithTabs("Field name: " + fieldName);
+                    printWithTabs("Field type: " + fieldType);
+                    printWithTabs("Field modifiers: " + fieldMods);
+                    try {
+                        printWithTabs("Field contents: ");
+                        checkIfRecursive(value);
+                    } catch (NullPointerException n) {
+                        printWithTabs("Empty field");
+                    }
+                    System.out.println();
                 }
-                catch (NullPointerException n) {
-                    printWithTabs(depth, "Empty field");
-                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                System.out.println("Error finding or accessing fields: ");
+                e.printStackTrace();
             }
+            System.out.println();
         }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-            System.out.println("Error finding or accessing fields: ");
-            e.printStackTrace();
-        }
-        System.out.println();
     }
 
 
-    private void displayParameters(Parameter[] params, boolean recursive) {
+    public void checkIfRecursive(Object obj) {
+        Class c = obj.getClass();
+        if (!c.isPrimitive()) {
+            if (rec) {
+                c = obj.getClass();
+                inspect(c, false);
+            }
+            else {
+                printWithTabs(Integer.toString(System.identityHashCode(obj)));
+            }
+        }
+        else {
+            printWithTabs(c.toString());
+        }
+    }
+
+
+    public void displayParameters(Parameter[] params) {
         String paramType;
         for (Parameter pi : params) {
             paramType = pi.getType().toString();
-            printWithTabs(depth, paramType);
+            printWithTabs(paramType);
         }
     }
 
 
-    private void printWithTabs(int depth, String printString) {
+    public void printWithTabs(String printString) {
         for (int i = 0; i < depth; i++) {
             System.out.print("\t");
         }
@@ -177,7 +207,7 @@ public class Inspector {
     }
 
 
-    private void printBreak() {
+    public void printBreak() {
         System.out.println("======================");
     }
 }
