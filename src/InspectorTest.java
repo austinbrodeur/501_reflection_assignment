@@ -91,5 +91,49 @@ class InspectorTest {
 
     }
 
+    @Test
+    void testGetIfArray1DPass() {
+
+        inspector.getIfArray(classA.val4.getClass(), classA.val4); // Using version of ClassA with a 1d array called 'val4' containing ["this", "is", "an", "array]
+
+        assertEquals("Array type: java.lang.String\n" +
+                        "Array length: 4\n" +
+                        "Array contents: \n" +
+                        "this\n" +
+                        "is\n" +
+                        "an\n" +
+                        "array\n",
+                systemOutContent.toString());
+
+    }
+
+    @Test
+    void testGetIfArray2DPass() {
+
+        inspector.getIfArray(classA.val5.getClass(), classA.val5);
+
+        assertEquals("Array type: java.lang.String[]\n" +
+                        "Array length: 3\n" +
+                        "Array contents: \n" +
+                        "Array type: java.lang.String\n" +
+                        "Array length: 2\n" +
+                        "Array contents: \n" +
+                        "this\n" +
+                        "is\n" +
+                        "[Ljava.lang.String;@86be70a\n" +
+                        "Array type: java.lang.String\n" +
+                        "Array length: 2\n" +
+                        "Array contents: \n" +
+                        "a\n" +
+                        "2d\n" +
+                        "[Ljava.lang.String;@480bdb19\n" +
+                        "Array type: java.lang.String\n" +
+                        "Array length: 1\n" +
+                        "Array contents: \n" +
+                        "array\n" +
+                        "[Ljava.lang.String;@2a556333\n",
+                systemOutContent.toString());
+    }
+
 
 }

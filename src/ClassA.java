@@ -4,7 +4,8 @@ public final class ClassA implements java.io.Serializable, Runnable {
     private int val = 3;
     private double val2 = 0.2;
     private boolean val3 = true;
-    private String[] val4 = {"this", "is", "an", "array"};
+    public String[] val4 = {"this", "is", "an", "array"};
+    public String[][] val5 = {{"this", "is"}, {"a", "2d"}, {"array"}};
 
     public ClassA() {
         val = 3;

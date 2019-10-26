@@ -1,12 +1,22 @@
-import org.omg.Messaging.SYNC_WITH_TRANSPORT;
-
 import java.lang.reflect.*;
+
+/**
+ * Austin Brodeur 30007952
+ *
+ * Note that I didn't implement recursive inspection, as it was causing a lot of instability (or at least what seemed like it) so there is no need to test for it
+ */
 
 
 public class Inspector {
     private int depth = 0;
     private boolean rec = false;
 
+
+    /** Inspects the given object
+     *
+     * @param obj       Object to be inspected
+     * @param recursive Enables/disables recursive mode (not used)
+     */
     public void inspect(Object obj, boolean recursive) {
         rec = recursive;
         Class c = obj.getClass();
@@ -14,6 +24,11 @@ public class Inspector {
     }
 
 
+    /** Goes up the class hierarchy until no class is left and calls outputAllDetails on each class
+     *
+     * @param c     Class of object to be inspected
+     * @param obj   Object to be inspected
+     */
     public void inspectClass(Class c, Object obj) {
         while (c != null) { // Get info on super classes until the base class object is reached
             outputAllDetails(c, obj);
@@ -23,6 +38,11 @@ public class Inspector {
     }
 
 
+    /** Outputs all the details of the class/object to be inspected
+     *
+     * @param c     Class of object to be inspected
+     * @param obj   Object to be inspected
+     */
     public void outputAllDetails(Class c, Object obj) {
         getIfArray(c, obj);
         getClassName(c);
@@ -32,6 +52,11 @@ public class Inspector {
         getInterfaces(c);
     }
 
+
+    /** Outputs all details on interfaces only (fields/arrays not checked as they will all be empty/constant and are not typically in interfaces regardless)
+     *
+     * @param c Class to be inspected
+     */
     public void outputAllDetailsInterface(Class c) {
         getInterfaces(c);
         getClassName(c);
@@ -40,6 +65,10 @@ public class Inspector {
     }
 
 
+    /** Finds all interfaces for a given class
+     *
+     * @param c Class to check interfaces on
+     */
     public void getInterfaces(Class c) {
         Class[] interfaces = c.getInterfaces();
         for (Class ci : interfaces) {
@@ -49,6 +78,10 @@ public class Inspector {
     }
 
 
+    /** Gets class name
+     *
+     * @param c Class to get name of
+     */
     public void getClassName(Class c) {
         String className = c.getName();
         if (c.isInterface()) {
@@ -60,6 +93,10 @@ public class Inspector {
     }
 
 
+    /** Gets class constructors
+     *
+     * @param c Class to get constructors of
+     */
     public void getConstructors(Class c) {
             int modifier;
             String constructorName;
@@ -96,6 +133,10 @@ public class Inspector {
     }
 
 
+    /** Gets class methods
+     *
+     * @param c Class to get methods of
+     */
     public void getMethods(Class c) {
         int modifier;
         String methodName;
@@ -137,6 +178,12 @@ public class Inspector {
         }
     }
 
+
+    /** Gets class fields
+     *
+     * @param c Class to get fields of
+     * @param obj Objects to get fields of
+     */
     public void getFields(Class c, Object obj) {
         Field[] fields = c.getDeclaredFields();
         Field singleField;
@@ -177,8 +224,10 @@ public class Inspector {
     }
 
 
-
-
+    /** Lists parameters for methods and constructors
+     *
+     * @param params List of parameters to display
+     */
     public void displayParameters(Parameter[] params) {
         String paramType;
         for (Parameter pi : params) {
@@ -188,28 +237,36 @@ public class Inspector {
     }
 
 
+    /** Checks if type is array and displays its information. Also displays 2d arrays. (Name is displayed before this method, so the array name is not contained here)
+     *
+     * @param c Array class
+     * @param obj Array object
+     */
     public void getIfArray(Class c, Object obj) {
         Class<?> comp = c.getComponentType();
         if (comp != null) {
             int length = Array.getLength(obj);
-            printWithTabs("Array name: " + comp.getName());
             printWithTabs("Array type: " + comp.getTypeName());
             printWithTabs("Array length: " + length);
             printWithTabs("Array contents: ");
             for (int i = 0; i < length; i++) {
                 Object arrayElement = Array.get(obj, i);
-                getIfArray(comp, arrayElement);
                 try {
+                    getIfArray(arrayElement.getClass(), arrayElement);
                     printWithTabs(arrayElement.toString());
                 }
                 catch (NullPointerException e) {
-                    return;
+
                 }
             }
         }
     }
 
 
+    /** Prints with a given number of tab indents
+     *
+     * @param printString String to display
+     */
     public void printWithTabs(String printString) {
         for (int i = 0; i < depth; i++) {
             System.out.print("\t");
