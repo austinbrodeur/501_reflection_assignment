@@ -13,7 +13,7 @@ public class Inspector {
 
 
     public void inspectClass(Class c, Object obj) {
-        while (c != null) { // Get info on super classes until the base class object it reached
+        while (c != null) { // Get info on super classes until the base class object is reached
             outputAllDetails(c, obj);
             c = c.getSuperclass();
             depth++;
@@ -21,9 +21,10 @@ public class Inspector {
     }
 
 
-    public void outputAllDetails(Class c, Object obj) { // Gets all details on the current class other than the name (as those are already displayed)
-        getInterfaces(c);
+    public void outputAllDetails(Class c, Object obj) {
+        getIfArray(c, obj);
         getClassName(c);
+        getInterfaces(c);
         getConstructors(c);
         getMethods(c);
         getFields(c, obj);
@@ -159,6 +160,7 @@ public class Inspector {
                     try {
                         printWithTabs("Field contents: ");
                         checkIfRecursive(value);
+                        getIfArray(value.getClass(), value);
                     } catch (NullPointerException n) {
                         printWithTabs("Empty field");
                     }
@@ -174,18 +176,20 @@ public class Inspector {
 
 
     public void checkIfRecursive(Object obj) {
-        Class c = obj.getClass();
-        if (!c.isPrimitive()) {
-            if (rec) {
-                c = obj.getClass();
-                inspect(c, false);
-            }
-            else {
-                printWithTabs(Integer.toString(System.identityHashCode(obj)));
+        try {
+            Class c = obj.getClass();
+            if (!c.isPrimitive()) {
+                if (rec) {
+                    c = obj.getClass();
+                    inspect(c, false);
+                } else {
+                    printWithTabs(Integer.toString(System.identityHashCode(obj)));
+                }
+            } else {
+                printWithTabs(c.toString());
             }
         }
-        else {
-            printWithTabs(c.toString());
+        catch (NullPointerException e) {
         }
     }
 
@@ -199,15 +203,33 @@ public class Inspector {
     }
 
 
+    public void getIfArray(Class c, Object obj) {
+        Class<?> comp = c.getComponentType();
+        if (comp != null) {
+            int length = Array.getLength(obj);
+            printWithTabs("Array name: " + comp.getName());
+            printWithTabs("Array type: " + comp.getTypeName());
+            printWithTabs("Array length: " + length);
+            printWithTabs("Array contents: ");
+            for (int i = 0; i < length; i++) {
+                Object arrayElement = Array.get(obj, i);
+                getIfArray(comp, arrayElement);
+                checkIfRecursive(arrayElement);
+                try {
+                    printWithTabs(arrayElement.toString());
+                }
+                catch (NullPointerException e) {
+                    return;
+                }
+            }
+        }
+    }
+
+
     public void printWithTabs(String printString) {
         for (int i = 0; i < depth; i++) {
             System.out.print("\t");
         }
         System.out.print(printString + "\n");
-    }
-
-
-    public void printBreak() {
-        System.out.println("======================");
     }
 }

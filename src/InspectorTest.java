@@ -1,39 +1,93 @@
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InspectorTest {
-    // Code for capturing sysout taken from: https://stackoverflow.com/questions/1119385/junit-test-for-system-out-println
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-    private final PrintStream originalOut = System.out;
-    private final PrintStream originalErr = System.err;
 
-    @Before
-    public void setUpStreams() {
-        System.setOut(new PrintStream(outContent));
-        System.setErr(new PrintStream(errContent));
-    }
-
-    @After
-    public void restoreStreams() {
-        System.setOut(originalOut);
-        System.setErr(originalErr);
-    }
+    // Method for capturing sysout taken from https://stackoverflow.com/questions/1119385/junit-test-for-system-out-println
+    private PrintStream originalSystemOut;
+    private ByteArrayOutputStream systemOutContent;
 
     private Inspector inspector = new Inspector();
+    private ClassA classA = new ClassA();
+
+    @BeforeEach
+    void redirectSystemOutStream() {
+
+        originalSystemOut = System.out;
+
+        // given
+        systemOutContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(systemOutContent));
+    }
+
+    @AfterEach
+    void restoreSystemOutStream() {
+        System.setOut(originalSystemOut);
+    }
 
     @Test
     void testGetConstructorsPass() {
-        ClassA classA = new ClassA();
 
         inspector.getConstructors(classA.getClass());
 
-        assertEquals("Class name: ClassA\nConstructor name: ClassA\nConstructor Modifiers: public\nConstructor name: ClassA\nConstructor Modifiers: public\nConstructor parameter types: \nint",
-                outContent.toString());
+        assertEquals("Constructor name: ClassA\n" +
+                        "Constructor Modifiers: public\n" +
+                        "Constructor name: ClassA\n" +
+                        "Constructor Modifiers: public\n" +
+                        "Constructor parameter types: \n" +
+                        "int\n" +
+                        "\r\n", // REMOVE \r FOR TEST TO PASS ON NON WINDOWS MACHINES
+                systemOutContent.toString());
     }
+
+
+    @Test
+    void testGetMethodsPass() {
+
+        inspector.getMethods(classA.getClass());
+
+        assertEquals("Method name: run\n" +
+                        "Method return type: void\n" +
+                        "Method modifiers: public\n" +
+                        "\r\n" +
+                        "Method name: toString\n" +
+                        "Method return type: class java.lang.String\n" +
+                        "Method modifiers: public\n" +
+                        "\r\n" +
+                        "Method name: setVal\n" +
+                        "Method return type: void\n" +
+                        "Method modifiers: public\n" +
+                        "Method exception(s): \n" +
+                        "class java.lang.Exception\n" +
+                        "Method parameter types: \n" +
+                        "int\n" +
+                        "\r\n" +
+                        "Method name: getVal\n" +
+                        "Method return type: int\n" +
+                        "Method modifiers: public\n" +
+                        "\r\n" +
+                        "Method name: printSomething\n" +
+                        "Method return type: void\n" +
+                        "Method modifiers: private\n" +
+                        "\r\n" +
+                        "\r\n",
+                systemOutContent.toString());
+    }
+
+
+    @Test
+    void testGetClassNamePass() {
+
+        inspector.getClassName(classA.getClass());
+
+        assertEquals("Class name: ClassA\n",
+                systemOutContent.toString());
+
+    }
+
 
 }
