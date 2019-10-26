@@ -1,3 +1,5 @@
+import org.omg.Messaging.SYNC_WITH_TRANSPORT;
+
 import java.lang.reflect.*;
 
 
@@ -24,10 +26,10 @@ public class Inspector {
     public void outputAllDetails(Class c, Object obj) {
         getIfArray(c, obj);
         getClassName(c);
-        getInterfaces(c);
         getConstructors(c);
         getMethods(c);
         getFields(c, obj);
+        getInterfaces(c);
     }
 
     public void outputAllDetailsInterface(Class c) {
@@ -38,6 +40,15 @@ public class Inspector {
     }
 
 
+    public void getInterfaces(Class c) {
+        Class[] interfaces = c.getInterfaces();
+        for (Class ci : interfaces) {
+            outputAllDetailsInterface(ci);
+            depth++;
+        }
+    }
+
+
     public void getClassName(Class c) {
         String className = c.getName();
         if (c.isInterface()) {
@@ -45,15 +56,6 @@ public class Inspector {
         }
         else {
             printWithTabs("Class name: " + className);
-        }
-    }
-
-
-    public void getInterfaces(Class c) {
-        Class[] interfaces = c.getInterfaces();
-        for (Class ci : interfaces) {
-            outputAllDetailsInterface(ci);
-            depth++;
         }
     }
 
@@ -82,6 +84,7 @@ public class Inspector {
                             printWithTabs("Constructor parameter types: ");
                             displayParameters(constructorParams);
                         }
+                        System.out.println();
                     }
 
                 } catch(Exception e){
@@ -159,7 +162,6 @@ public class Inspector {
                     printWithTabs("Field modifiers: " + fieldMods);
                     try {
                         printWithTabs("Field contents: ");
-                        checkIfRecursive(value);
                         getIfArray(value.getClass(), value);
                     } catch (NullPointerException n) {
                         printWithTabs("Empty field");
@@ -175,23 +177,6 @@ public class Inspector {
     }
 
 
-    public void checkIfRecursive(Object obj) {
-        try {
-            Class c = obj.getClass();
-            if (!c.isPrimitive()) {
-                if (rec) {
-                    c = obj.getClass();
-                    inspect(c, false);
-                } else {
-                    printWithTabs(Integer.toString(System.identityHashCode(obj)));
-                }
-            } else {
-                printWithTabs(c.toString());
-            }
-        }
-        catch (NullPointerException e) {
-        }
-    }
 
 
     public void displayParameters(Parameter[] params) {
@@ -214,7 +199,6 @@ public class Inspector {
             for (int i = 0; i < length; i++) {
                 Object arrayElement = Array.get(obj, i);
                 getIfArray(comp, arrayElement);
-                checkIfRecursive(arrayElement);
                 try {
                     printWithTabs(arrayElement.toString());
                 }

@@ -29,6 +29,8 @@ class InspectorTest {
         System.setOut(originalSystemOut);
     }
 
+
+    // These tests are unstable, as the order of the returned methods/fields/contructors etc is sometimes ambiguous (and I can't figure out why) so I didn't rely on these very much. However, I still left them here because of the requirement.
     @Test
     void testGetConstructorsPass() {
 
@@ -40,7 +42,7 @@ class InspectorTest {
                         "Constructor Modifiers: public\n" +
                         "Constructor parameter types: \n" +
                         "int\n" +
-                        "\r\n", // REMOVE \r FOR TEST TO PASS ON NON WINDOWS MACHINES
+                        "\r\n",
                 systemOutContent.toString());
     }
 
